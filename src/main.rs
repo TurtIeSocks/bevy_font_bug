@@ -11,12 +11,11 @@ fn main() {
             level: Level::DEBUG,
             ..Default::default()
         }))
-        .init_resource::<FontAsset>()
         .add_systems(Startup, setup)
         .add_systems(
             Update,
             (
-                spawn_text.run_if(on_event::<AssetEvent<Font>>),
+                spawn_text.run_if(once_after_delay(Duration::from_secs(1))),
                 spawn_text.run_if(once_after_delay(Duration::from_secs(2))),
             ),
         )
@@ -26,14 +25,7 @@ fn main() {
 #[derive(Component)]
 struct ParentNode;
 
-#[derive(Default, Resource)]
-struct FontAsset(Handle<Font>);
-
-fn setup(
-    asset_server: Res<AssetServer>,
-    mut font_asset: ResMut<FontAsset>,
-    mut commands: Commands,
-) {
+fn setup(mut commands: Commands) {
     commands.spawn(Camera2d::default());
     commands
         .spawn((
@@ -49,19 +41,17 @@ fn setup(
             },
             ParentNode,
         ))
-        .with_children(|parent: &mut ChildBuilder<'_>| {
+        .with_children(|parent| {
             parent.spawn(Text::new(
-                "Each child is generated on a font asset event and the last one loads after a 2s delay",
+                "2 children will be generated at 1 and 2 seconds after the app starts",
             ));
         });
-    font_asset.0 = asset_server.load("NotoSansJA.ttf");
 }
 
 fn spawn_text(
     mut commands: Commands,
-    font_asset: Res<FontAsset>,
     parent_query: Single<Entity, With<ParentNode>>,
-    mut er: EventReader<AssetEvent<Font>>,
+    asset_server: Res<AssetServer>,
 ) {
     commands.entity(*parent_query).with_children(|parent| {
         parent
@@ -75,29 +65,10 @@ fn spawn_text(
                 ..Default::default()
             })
             .with_children(|parent| {
-                let is_event_triggered = er.len() > 0;
-                for event in er.read() {
-                    let is_added = event.is_added(font_asset.0.id());
-                    let is_loaded = event.is_loaded_with_dependencies(font_asset.0.id());
-
-                    // if !is_added && !is_loaded {
-                    // // if you uncomment this, all text assets will use the NotoSansJA font?
-                    //     return;
-                    // }
-
-                    parent.spawn(Text::new(format!(
-                        "NotoSansJA asset, is_added: {}, is_loaded: {}",
-                        is_added, is_loaded
-                    )));
-                }
-                if !is_event_triggered {
-                    parent.spawn(Text::new("2 sec delay"));
-                }
-
                 parent.spawn((
                     Text::new("NotoSansJA => こんにちは世界"),
                     TextFont {
-                        font: font_asset.0.clone(),
+                        font: asset_server.load("NotoSansJA.ttf"),
                         ..default()
                     },
                 ));
