@@ -1,4 +1,4 @@
-# bevy_font_bug
+# Bevy Font Rendering Issue
 
 Minimal reproduction of a bug related to the `cosmic_text` crate that is causing inconsistent font rendering in Bevy. 
 
