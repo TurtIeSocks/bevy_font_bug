@@ -81,6 +81,7 @@ fn spawn_text(
                     let is_loaded = event.is_loaded_with_dependencies(font_asset.0.id());
 
                     // if !is_added && !is_loaded {
+                    // // if you uncomment this, all text assets will use the NotoSansJA font?
                     //     return;
                     // }
 
